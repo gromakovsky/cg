@@ -21,19 +21,19 @@ using cg::segment_2;
 
 struct segment_intersects_segment_viewer : cg::visualization::viewer_adapter {
 
-   segment_intersects_segment_viewer()
-   : segments(segment_2f(point_2f(0, 0), point_2f(50, 50)),
-   segment_2f(point_2f(25, 0), point_2f(25, 25))) {
+   segment_intersects_segment_viewer() {
+      segments.push_back(segment_2f(point_2f(0, 0), point_2f(100, 100))); 
+      segments.push_back(segment_2f(point_2f(50, 0), point_2f(50, 50)));
    }
 
    void draw(cg::visualization::drawer_type & drawer) const {
-      drawer.set_color(cg::has_intersection(segments.first, segments.second) ? Qt::green : Qt::white);
+      drawer.set_color(cg::has_intersection(segments[0], segments[1]) ? Qt::green : Qt::white);
 
-      drawer.draw_line(segments.first);
-      drawer.draw_line(segments.second);
-      if (current_point) {
+      drawer.draw_line(segments[0]);
+      drawer.draw_line(segments[1]);
+      if (idx) {
          drawer.set_color((rbutton_pressed_) ? Qt::red : Qt::yellow);
-         drawer.draw_point(*current_point, 5);
+         drawer.draw_point(segments[idx->first][idx->second], 5);
       }
    }
 
@@ -46,7 +46,7 @@ struct segment_intersects_segment_viewer : cg::visualization::viewer_adapter {
 
    bool on_press(const point_2f & p) {
       rbutton_pressed_ = true;
-      return set_current_point(p);
+      return set_idx(p);
    }
 
    bool on_release(const point_2f & p) {
@@ -56,32 +56,39 @@ struct segment_intersects_segment_viewer : cg::visualization::viewer_adapter {
 
    bool on_move(const point_2f & p) {
       if (!rbutton_pressed_) {
-         set_current_point(p);
+         set_idx(p);
       } else {
-         current_point = p;
+         if (idx) {
+            idx_to_point(*idx) = p;
+         }
       }
       return true;
    }
 
 private:
-   bool set_current_point(const point_2f & p) {
-      current_point.reset();
+   typedef std::pair<size_t, size_t> idx_type;
+   bool set_idx(const point_2f & p) {
+      idx.reset();
       float max_r;
       for (size_t i = 0; i != 2; ++i) {
          for (size_t j = 0; j != 2; ++j) {
-            point_2 current = (i == 1 ? segments.second[j] : segments.first[j]);
+            point_2 current = idx_to_point(idx_type(i, j));
             float current_r = (p.x - current.x) * (p.x - current.x) + (p.y - current.y) * (p.y - current.y);
-            if ((current_point && current_r < max_r) || (!current_point && current_r < 100)) {
-               current_point = (i == 1 ? segments.second[i] : segments.first[i]);
+            if ((idx && current_r < max_r) || (!idx && current_r < 100)) {
+               idx = idx_type(i, j);
                max_r = current_r;
             }
          }
       }
-      return current_point;
+      return idx;
    }
    
-   std::pair<segment_2f, segment_2f> segments;
-   boost::optional<cg::point_2f *> current_point;
+   inline point_2f & idx_to_point(idx_type idx) {
+      return segments[idx.first][idx.second];
+   }
+   
+   std::vector<segment_2f> segments;
+   boost::optional<idx_type> idx;
    bool rbutton_pressed_;
 
 };
