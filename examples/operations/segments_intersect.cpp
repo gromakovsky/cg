@@ -98,6 +98,6 @@ private:
 int main(int argc, char ** argv) {
    QApplication app(argc, argv);
    segment_intersects_segment_viewer viewer;
-   cg::visualization::run_viewer(&viewer, "Segment intersects segment");
+   cg::visualization::run_viewer(&viewer, "Segments intersect");
 }
 

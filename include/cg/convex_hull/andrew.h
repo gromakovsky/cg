@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/range/algorithm/sort.hpp>
+#include <algorithm>
 
 #include <cg/operations/orientation.h>
 
