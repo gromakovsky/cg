@@ -89,5 +89,5 @@ int main(int argc, char ** argv)
 {
    QApplication app(argc, argv);
    graham_viewer viewer;
-   cg::visualization::run_viewer(&viewer, "convex hull");
+   cg::visualization::run_viewer(&viewer, "Convex hull");
 }
