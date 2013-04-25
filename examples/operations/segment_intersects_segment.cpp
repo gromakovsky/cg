@@ -1,6 +1,7 @@
 #include <QColor>
 #include <QApplication>
 
+#include <boost/assign/list_of.hpp>
 #include <boost/optional.hpp>
 #include <utility>
 
@@ -22,7 +23,7 @@ using cg::segment_2;
 struct segment_intersects_segment_viewer : cg::visualization::viewer_adapter {
 
    segment_intersects_segment_viewer() {
-      segments.push_back(segment_2f(point_2f(0, 0), point_2f(100, 100))); 
+      segments.push_back(segment_2f(point_2f(0, 0), point_2f(100, 100)));
       segments.push_back(segment_2f(point_2f(50, 0), point_2f(50, 50)));
    }
 
@@ -67,6 +68,7 @@ struct segment_intersects_segment_viewer : cg::visualization::viewer_adapter {
 
 private:
    typedef std::pair<size_t, size_t> idx_type;
+
    bool set_idx(const point_2f & p) {
       idx.reset();
       float max_r;
@@ -82,11 +84,11 @@ private:
       }
       return idx;
    }
-   
+
    inline point_2f & idx_to_point(idx_type idx) {
       return segments[idx.first][idx.second];
    }
-   
+
    std::vector<segment_2f> segments;
    boost::optional<idx_type> idx;
    bool rbutton_pressed_;
