@@ -12,6 +12,7 @@
 #include <cg/convex_hull/graham.h>
 #include <cg/convex_hull/andrew.h>
 #include <cg/convex_hull/jarvis.h>
+#include <cg/convex_hull/quick_hull.h>
 
 using cg::point_2f;
 using cg::point_2;
@@ -41,11 +42,12 @@ struct graham_viewer : cg::visualization::viewer_adapter
    {
       p.corner_stream() << "press mouse rbutton to add point" << cg::visualization::endl
                         << "points: " << pts_.size() << " convex_hull: " << ch_size_ << cg::visualization::endl
-                        << "press 'g' or 'a' to change algorithm" << cg::visualization::endl;
+                        << "press 'g', 'q' or 'a' to change algorithm" << cg::visualization::endl;
       switch (algo)
       {
          case graham : p.corner_stream() << "algorithm: Graham" << cg::visualization::endl; break;
          case andrew : p.corner_stream() << "algorithm: Andrew" << cg::visualization::endl; break;
+         case quick  : p.corner_stream() << "algorithm: Quick hull" << cg::visualization::endl; break;
          case jarvis : p.corner_stream() << "algorithm: Jarvis" << cg::visualization::endl; break;
       }
    }
@@ -56,6 +58,7 @@ struct graham_viewer : cg::visualization::viewer_adapter
       {
          case graham : it = cg::graham_hull(pts_.begin(), pts_.end()); break;
          case andrew : it = cg::andrew_hull(pts_.begin(), pts_.end()); break;
+         case quick  : it = cg::quick_hull(pts_.begin(), pts_.end()); break;
          case jarvis : it = cg::jarvis_hull(pts_.begin(), pts_.end()); break;
       }
       ch_size_ = std::distance(pts_.begin(), it);
@@ -73,6 +76,7 @@ struct graham_viewer : cg::visualization::viewer_adapter
       {
          case Qt::Key_G : algo = graham; break;
          case Qt::Key_A : algo = andrew; break;
+         case Qt::Key_Q : algo = quick; break;
          default : return false;
       }
       make_hull();
@@ -83,7 +87,8 @@ private:
    enum algorithms {
       graham =       0,
       andrew =       1,
-      jarvis =       2
+      quick  =       2,
+      jarvis =       3,
    } algo;
    std::vector<point_2> pts_;
    size_t ch_size_;
