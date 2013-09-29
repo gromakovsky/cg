@@ -13,6 +13,7 @@ namespace cg
    template <class Scalar>
    struct point_2t
    {
+      typedef Scalar Sc;
       Scalar x, y;
 
       point_2t(Scalar x, Scalar y)

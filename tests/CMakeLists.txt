@@ -18,6 +18,8 @@ set(SOURCES
    contains.cpp
    convex_hull.cpp
    convex.cpp
+   intersection.cpp
+   simplify.cpp
 )
 
 add_executable(cg-test ${SOURCES})
