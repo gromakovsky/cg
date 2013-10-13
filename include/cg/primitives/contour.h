@@ -10,14 +10,17 @@ namespace cg
    template <class Scalar>
    struct contour_2t;
 
-   typedef contour_2t<float> contour_2f;
    typedef contour_2t<double> contour_2;
+   typedef contour_2t<float> contour_2f;
    typedef contour_2t<int>   contour_2i;
 
    template <class Scalar>
    struct contour_2t
    {
-      contour_2t(std::vector<point_2t<Scalar> > const& pts) : pts_(pts)
+      contour_2t()
+      {}
+
+      contour_2t(std::vector<point_2t<Scalar> > const & pts) : pts_(pts)
       {}
 
       typedef typename std::vector<point_2t<Scalar> >::const_iterator const_iterator;
@@ -52,7 +55,27 @@ namespace cg
          return vertices_num();
       }
 
-      point_2t<Scalar> const& operator [] (size_t idx) const
+      void add_point(const point_2t<Scalar> p)
+      {
+         pts_.push_back(p);
+      }
+
+      void clear()
+      {
+         pts_.clear();
+      }
+
+      point_2t<Scalar> front()
+      {
+         return pts_.front();
+      }
+
+      point_2t<Scalar> back()
+      {
+         return pts_.back();
+      }
+
+      point_2t<Scalar> const & operator [] (size_t idx) const
       {
          return pts_[idx];
       }

@@ -1,13 +1,12 @@
 #pragma once
 
-#include "cg/primitives/point.h"
 #include "cg/primitives/segment.h"
 #include "cg/operations/distance.h"
-#include "cg/operations/orientation.h"
 
 #include <boost/utility.hpp>
-#include <iterator>
+
 #include <algorithm>
+#include <iterator>
 
 namespace cg
 {
@@ -24,7 +23,7 @@ namespace cg
          }
 
          typedef typename std::iterator_traits<BidIter>::value_type point;
-         typedef typename point::Sc Scalar;
+         typedef typename point::scalar_type Scalar;
 
          segment_2t<Scalar> s(*p, *q);
          BidIter it_max = std::max_element(boost::next(p), q, [p, q, &s](const point a, point b)

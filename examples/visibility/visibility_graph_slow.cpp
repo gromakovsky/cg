@@ -174,14 +174,8 @@ struct visibility_graph_viewer : cg::visualization::viewer_adapter
                   auto a_or1 = cg::orientation(pol2[b], pol1[a], a_prev);
                   auto a_or2 = cg::orientation(pol2[b], pol1[a], a_next);
 
-                  //std::cout << "a_or1: " << a_or1 << " a_or2: " << a_or2 << std::endl;
-
-                  if (a_or1 != cg::CG_COLLINEAR && a_or2 != cg::CG_COLLINEAR)
-                  {
-                     if (a_or1 != a_or2)
-                     {
-                        continue;
-                     }
+                  if (cg::opposite(a_or1, a_or2)) {
+                     continue;
                   }
 
                   auto b_prev = (b == 0 ? pol2.back() : pol2[b - 1]);
@@ -190,14 +184,8 @@ struct visibility_graph_viewer : cg::visualization::viewer_adapter
                   auto b_or1 = cg::orientation(pol1[a], pol2[b], b_prev);
                   auto b_or2 = cg::orientation(pol1[a], pol2[b], b_next);
 
-                  //std::cout << "b_or1: " << b_or1 << " b_or2: " << b_or2 << std::endl;
-
-                  if (b_or1 != cg::CG_COLLINEAR && b_or2 != cg::CG_COLLINEAR)
-                  {
-                     if (b_or1 != b_or2)
-                     {
-                        continue;
-                     }
+                  if (cg::opposite(b_or1, b_or2)) {
+                     continue;
                   }
 
                   if (test_visibility(min_point, max_point))

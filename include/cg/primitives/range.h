@@ -28,14 +28,21 @@ namespace cg
          , sup(-1)
       {}
 
-      bool is_empty() const { return inf > sup; }
+      bool is_empty() const
+      {
+         return inf > sup;
+      }
 
-      bool contains(Scalar x) const { return (inf <= x) && (x <= sup); }
+      bool contains(Scalar x) const
+      {
+         return (inf <= x) && (x <= sup);
+      }
 
       static range_t maximal()
       {
+         static const Scalar lowest_val = std::numeric_limits<Scalar>::lowest();
          static const Scalar max_val = std::numeric_limits<Scalar>::max();
-         return range_t(-max_val, max_val);
+         return range_t(lowest_val, max_val);
       }
    };
 

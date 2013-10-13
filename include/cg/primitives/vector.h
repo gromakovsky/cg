@@ -1,7 +1,5 @@
 #pragma once
 
-#include "range.h"
-
 namespace cg
 {
    template <class Scalar> struct vector_2t;
@@ -55,5 +53,8 @@ namespace cg
    }
 
    template <class Scalar>
-   vector_2t<Scalar> const operator - (vector_2t<Scalar> const & v) { return vector_2t<Scalar>(-v.x, -v.y); }
+   vector_2t<Scalar> const operator - (vector_2t<Scalar> const & v)
+   {
+      return vector_2t<Scalar>(-v.x, -v.y);
+   }
 }

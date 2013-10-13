@@ -13,7 +13,7 @@ namespace cg
    template <class Scalar>
    struct point_2t
    {
-      typedef Scalar Sc;
+      typedef Scalar scalar_type;
       Scalar x, y;
 
       point_2t(Scalar x, Scalar y)
@@ -44,9 +44,13 @@ namespace cg
    inline bool operator < (point_2t<Scalar> const & a, point_2t<Scalar> const & b)
    {
       if (a.x == b.x)
+      {
          return a.y < b.y;
+      }
       else
+      {
          return a.x < b.x;
+      }
    }
 
    template <class Scalar>
