@@ -11,6 +11,7 @@
 
 #include "cg/primitives/segment.h"
 #include "cg/primitives/point.h"
+#include "cg/primitives/vector.h"
 
 #include "cg/operations/has_intersection/segment_segment.h"
 #include "cg/operations/orientation.h"
@@ -108,6 +109,14 @@ struct shortest_path_viewer : cg::visualization::viewer_adapter
 
       p.corner_stream() << "double click clears the screen" << cg::visualization::endl;
       p.corner_stream() << "size: " << path.size() << cg::visualization::endl;
+
+      for (size_t i = 1; i != polygons.size(); ++i)
+      {
+         for (auto it = polygons[i].cbegin(); it != polygons[i].cend(); ++it)
+         {
+            p.global_stream((point_2f) *it + cg::vector_2f(5, 2)) << i;
+         }
+      }
    }
 
    bool on_double_click(const point_2f & p)
