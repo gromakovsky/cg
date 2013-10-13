@@ -80,7 +80,7 @@ struct shortest_path_viewer : cg::visualization::viewer_adapter
          return;
       }
 
-      for (size_t lp = path.size() - 1, l = 0; l != path.size(); lp = l++)
+      for (size_t lp = 0, l = 1; l != path.size(); lp = l++)
       {
          drawer.draw_point(path[l], 3);
          drawer.draw_line(path[lp], path[l]);
@@ -107,7 +107,7 @@ struct shortest_path_viewer : cg::visualization::viewer_adapter
       }
 
       p.corner_stream() << "double click clears the screen" << cg::visualization::endl;
-      p.corner_stream() << "size: " << polygons.size() << cg::visualization::endl;
+      p.corner_stream() << "size: " << path.size() << cg::visualization::endl;
    }
 
    bool on_double_click(const point_2f & p)
@@ -183,6 +183,21 @@ struct shortest_path_viewer : cg::visualization::viewer_adapter
    {
       const size_t n = polygons.size();
       edges.clear();
+
+      for (auto it = polygons.cbegin(); it != polygons.cend() - 1; ++it)
+      {
+         if (it->size() == 0)
+         {
+            continue;
+         }
+
+         auto pol = *it;
+
+         for (size_t lp = pol.size() - 1, l = 0; l != pol.size(); lp = l++)
+         {
+            edges.insert(std::make_pair( std::min(pol[l], pol[lp]), std::max(pol[l], pol[lp]) ));
+         }
+      }
 
       for (size_t i = 0; i != n; ++i)
       {
@@ -332,6 +347,7 @@ struct shortest_path_viewer : cg::visualization::viewer_adapter
       }
 
       path.push_back(point_by_number[0]);
+      std::reverse(path.begin(), path.end());
 
       polygons.erase(polygons.end() - 1);
    }
