@@ -58,6 +58,19 @@ namespace common
          --(*this);
          return tmp;
       }
+      
+      range_circulator operator+ (int x) const {
+         range_circulator res(*this);
+         for (int i = 0; i < x; i++) ++res;
+         return res;
+      }
+
+      range_circulator operator- (int x) const {
+         range_circulator res(*this);
+         for (int i = 0; i < x; i++) --res;
+         return res;
+      }
+
 
       template<typename Range>
       friend bool operator == (   range_circulator<Range> const & a,
