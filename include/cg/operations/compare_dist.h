@@ -1,3 +1,4 @@
+// From https://github.com/BorisMinaev/cg
 #pragma once
 
 #include "cg/primitives/point.h"

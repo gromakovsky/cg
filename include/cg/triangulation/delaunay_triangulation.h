@@ -173,53 +173,16 @@ namespace cg
             my_node inf;
             inf.inf = true;
             nodes.push_back(inf);
-            size_ = 1;
          }
 
          size_t size() const
          {
-            return size_ - 1;
+            return nodes.size() - 1;
          }
 
          bool closer(std::pair<point, point> first, std::pair<point, point> second)
          {
             return compare_dist(first.first, first.second, second.first, second.second);
-         }
-
-         node_iterator find_closest(point p)
-         {
-            auto res = nodes.begin();
-
-            for (auto it = nodes.begin(); it != nodes.end(); ++it)
-            {
-               if (res->inf)
-               {
-                  res = it;
-                  continue;
-               }
-
-               if (!it->inf && closer(std::make_pair(p, it->p), std::make_pair(p, res->p)))
-               {
-                  res = it;
-               }
-            }
-
-            return res;
-
-         }
-
-         face_iterator localize(const point & p)
-         {
-            for (auto it = faces.begin(); it != faces.end(); ++it)
-            {
-               if (it->contains(p))
-               {
-                  return it;
-               }
-            }
-
-            std::cerr << "Something went wrong";
-            return faces.begin();
          }
 
          bool has_intersection(std::pair<my_node, my_node> a, std::pair<my_node, my_node> b)
@@ -233,72 +196,106 @@ namespace cg
 
          }
 
-         face_iterator localize_from(const point & p, node_iterator from)
+         face_iterator localize(const point & p, boost::optional<node_iterator> close_point)
          {
-            std::cerr << "Localising " << p.x << " " << p.y << " " << std::endl;
-            auto res = from->face;
-
-            while (!res->contains(p))
+            if (!close_point)
             {
-               res->print();
+               for (auto it = faces.begin(); it != faces.end(); ++it)
+               {
+                  if (it->contains(p))
+                  {
+                     return it;
+                  }
+               }
+
+               std::cerr << "Something went wrong";
+               return faces.begin();
+            }
+            else
+            {
+               auto res = (*close_point)->face;
+
+               while (!res->contains(p))
+               {
+                  //res->print();
+
+                  for (size_t i = 0; i != 3; ++i)
+                  {
+
+                     if (has_intersection(std::make_pair(*((*res)[i]), my_node(p)), std::make_pair(*((*res)[i + 1]), *((*res)[i + 2]))))
+                     {
+                        res = res->neighbors[i];
+                        break;
+                     }
+                  }
+               }
+
+               return res;
+
+            }
+         }
+
+         node_iterator find_closest(point p, boost::optional<node_iterator> close_point)
+         {
+            if (size() < 2 || !close_point)
+            {
+               auto res = nodes.begin();
+
+               for (auto it = nodes.begin(); it != nodes.end(); ++it)
+               {
+                  if (it->inf)
+                  {
+                     continue;
+                  }
+
+                  if (res->inf)
+                  {
+                     res = it;
+                     continue;
+                  }
+
+                  if (closer(std::make_pair(p, it->p), std::make_pair(p, res->p)))
+                  {
+                     res = it;
+                  }
+               }
+
+               return res;
+            }
+            else
+            {
+               my_face face = *localize(p, close_point);
+               auto res = *close_point;
 
                for (size_t i = 0; i != 3; ++i)
                {
+                  auto cur = face[i];
 
-                  if (has_intersection(std::make_pair(*((*res)[i]), my_node(p)), std::make_pair(*((*res)[i + 1]), *((*res)[i + 2]))))
+                  if (cur->inf)
                   {
-                     res = res->neighbors[i];
-                     break;
+                     continue;
                   }
-               }
-            }
 
-            std::cerr << "Finished localising, found: ";
-            res->print();
-            return res;
-         }
+                  if (res->inf || closer(std::make_pair(p, cur->p), std::make_pair(p, res->p)))
+                  {
+                     res = cur;
+                  }
 
-         node_iterator find_closest_from(point p, node_iterator from)
-         {
-            if (size_ < 3)
-            {
-               return find_closest(p);
-            }
-
-            my_face face = *localize_from(p, from);
-            auto res = from;
-
-            for (size_t i = 0; i != 3; ++i)
-            {
-               auto cur = face[i];
-
-               if (cur->inf)
-               {
-                  continue;
                }
 
-               if (res->inf || closer(std::make_pair(p, cur->p), std::make_pair(p, res->p)))
-               {
-                  res = cur;
-               }
-
+               return res;
             }
 
-            return res;
          }
 
          void three_points() // inf + 2 real points
          {
-            //std::cerr << "Three points entered" << std::endl;
-            my_face face1(nodes.begin(), nodes.begin() + 1, nodes.begin() + 2);
-            my_face face2(nodes.begin(), nodes.begin() + 2, nodes.begin() + 1);
-
             faces.clear();
 
-            faces.push_back(face1);
+            faces.push_back({nodes.begin(), nodes.begin() + 1, nodes.begin() + 2});
             auto f1 = faces.end() - 1;
 
-            faces.push_back(face2);
+            faces.push_back({nodes.begin(), nodes.begin() + 2, nodes.begin() + 1});
             auto f2 = faces.end() - 1;
 
             for (size_t i = 0; i != 3; ++i)
@@ -308,11 +305,9 @@ namespace cg
 
             f1->set_neighbors(f2, f2, f2);
             f2->set_neighbors(f1, f1, f1);
-
-            //std::cerr << "Three points finished" << std::endl;
          }
 
-         bool circumcircle_contains(my_node a, my_node b, my_node c, my_node p)
+         bool circumcircle_contains(const my_node & a, const my_node & b, const my_node & c, const my_node & p) const
          {
             if (p.inf)
             {
@@ -321,6 +316,7 @@ namespace cg
 
             if (a.inf + b.inf + c.inf > 1)
             {
+               std::cerr << "Strange situation" << std::endl;
                return false;
             }
 
@@ -339,14 +335,13 @@ namespace cg
                return orientation(a.p, b.p, p.p) == CG_LEFT;
             }
 
-            return cg::circumcircle_contains(a.p, b.p, c.p, p.p);
+            return cg::circumcircle_contains({a.p, b.p, c.p}, p.p);
          }
 
          void flip(face_iterator face, size_t neighbor_id, size_t opposite)
          {
             auto neighbor = (face->neighbors[neighbor_id]);
             auto opposite_point = (*neighbor)[opposite];
-            std::cerr << "Bad with " << opposite_point->p.x << " " << opposite_point->p.y  << std::endl;
             my_face face1((*face)[neighbor_id + 2], (*face)[neighbor_id], opposite_point);
             my_face face2((*face)[neighbor_id + 1], opposite_point, (*face)[neighbor_id]);
             face1.set_neighbors(neighbor, neighbor->neighbors[(opposite + 2) % 3], face->neighbors[(neighbor_id + 1) % 3]);
@@ -361,9 +356,6 @@ namespace cg
 
          void check(face_iterator face)
          {
-            std::cerr << "Checking: ";
-            face->print();
-
             for (size_t i = 0; i != 3; ++i)
             {
                auto cur_neighbor = (face->neighbors[i]);
@@ -391,7 +383,6 @@ namespace cg
                }
 
             }
-
          }
 
          void notify_neighbors_and_nodes(face_iterator face)
@@ -408,8 +399,6 @@ namespace cg
             my_face face = *face_iter;
             *face_iter = {face[0], face[1], p};
             auto f1 = face_iter;
-            //faces.push_back({face[0], face[1], p});
-            //auto f1 = faces.end() - 1;
             faces.push_back({face[1], face[2], p});
             auto f2 = faces.end() - 1;
             faces.push_back({face[2], face[0], p});
@@ -427,41 +416,19 @@ namespace cg
             check(f3);
          }
 
-         node_iterator insert(point p)
+         node_iterator insert(point p, boost::optional<node_iterator> close_point)
          {
             nodes.push_back(my_node(p));
-            ++size_;
 
-            if (size_ == 3)
+            if (size() == 2)
             {
                three_points();
             }
             else
             {
-               if (size_ > 3)
+               if (size() > 2)
                {
-                  auto face = localize(p);
-                  insert_into_face(nodes.end() - 1, face);
-               }
-            }
-
-            return nodes.end() - 1;
-         }
-
-         node_iterator insert_from(point p, node_iterator from)
-         {
-            nodes.push_back(my_node(p));
-            ++size_;
-
-            if (size_ == 3)
-            {
-               three_points();
-            }
-            else
-            {
-               if (size_ > 3)
-               {
-                  auto face = localize_from(p, from);
+                  auto face = localize(p, close_point);
                   insert_into_face(nodes.end() - 1, face);
                }
             }
@@ -491,16 +458,7 @@ namespace cg
 
       bool random_bool()
       {
-         std::cout << distribution(generator) << std::endl;
          return distribution(generator) < P;
-         /*std::mt19937 generator;
-         std::uniform_real_distribution<> distribution;
-         auto dice = std::bind(distribution, generator);
-
-         return dice() < P;
-         srand(time(0));
-         return rand() % 2;*/
-
       }
 
       std::vector<layer> levels;
@@ -533,9 +491,10 @@ namespace cg
 
       bool insert(point p)
       {
-         std::cerr << "Inserting " << p.x << " " << p.y << std::endl;
+         //std::cerr << "Inserting " << p.x << " " << p.y << std::endl;
          std::vector<node_iterator> closest(levels.size());
-         closest.back() = levels.back().find_closest(p);
+
+         closest.back() = levels.back().find_closest(p, boost::none);
 
          if (closest.back()->p == p)
          {
@@ -544,8 +503,8 @@ namespace cg
 
          for (int level = static_cast<int>(levels.size()) - 2; level != -1; --level)
          {
-            std::cerr << "Localising on level " << level << std::endl;
-            closest[level] = levels[level].find_closest_from(p, closest[level + 1]->prev_level_node);
+            //std::cerr << "Localising on level " << level << std::endl;
+            closest[level] = levels[level].find_closest(p, closest[level + 1]->prev_level_node);
 
             if (closest[level]->p == p)
             {
@@ -553,9 +512,9 @@ namespace cg
             }
          }
 
-         std::cerr << "Level is " << 0 << std::endl;
-         std::cerr << "On this level the closest point is " << closest.front()->p.x << " " << closest.front()->p.y << std::endl;
-         auto prev = levels.front().insert_from(p, closest.front());
+         //std::cerr << "Level is " << 0 << std::endl;
+         //std::cerr << "On this level the closest point is " << closest.front()->p.x << " " << closest.front()->p.y << std::endl;
+         auto prev = levels.front().insert(p, closest.front());
 
          size_t level = 1;
 
@@ -563,21 +522,22 @@ namespace cg
          {
             if (level == levels.size())
             {
-               std::cerr << "Level is " << level << std::endl;
+               //std::cerr << "Level is " << level << std::endl;
                levels.push_back(layer());
-               (levels.back().insert(p))->prev_level_node = prev;
+               auto iter = levels.back().insert(p, boost::none);
+               iter->prev_level_node = prev;
                break;
             }
 
-            std::cerr << "Level is " << level << std::endl;
-            std::cerr << "On this level the closest point is " << closest[level]->p.x << " " << closest[level]->p.y << std::endl;
-            auto inserted = levels[level].insert_from(p, closest[level]);
+            //std::cerr << "Level is " << level << std::endl;
+            //std::cerr << "On this level the closest point is " << closest[level]->p.x << " " << closest[level]->p.y << std::endl;
+            auto inserted = levels[level].insert(p, closest[level]);
             inserted->prev_level_node = prev;
             prev = inserted;
             ++level;
          }
 
-         std::cerr << "Inserted\nLevels = " << levels.size() << std::endl << std::endl;
+         //std::cerr << "Inserted\nLevels = " << levels.size() << std::endl << std::endl;
          return true;
       }
 
@@ -589,14 +549,14 @@ namespace cg
       boost::optional< triangle_2t<Scalar> > localize(const point_2t<Scalar> p)
       {
          std::vector<node_iterator> closest(levels.size());
-         closest.back() = levels.back().find_closest(p);
+         closest.back() = levels.back().find_closest(p, boost::none);
 
          for (int level = static_cast<int>(levels.size()) - 2; level != -1; --level)
          {
-            closest[level] = levels[level].find_closest_from(p, closest[level + 1]->prev_level_node);
+            closest[level] = levels[level].find_closest(p, closest[level + 1]->prev_level_node);
          }
 
-         auto res = levels.front().localize_from(p, closest.front());
+         auto res = levels.front().localize(p, closest.front());
 
          if (res->inf())
          {
@@ -612,7 +572,7 @@ namespace cg
    };
 
    template <class RandIter>
-   std::vector< triangle_2t<typename std::iterator_traits<RandIter>::value_type::scalar_type> > delanay_triangulation(RandIter p, RandIter q)
+   std::vector< triangle_2t<typename std::iterator_traits<RandIter>::value_type::scalar_type> > delaunay_triangulation(RandIter p, RandIter q)
    {
       typedef typename std::iterator_traits<RandIter>::value_type::scalar_type Scalar;
 

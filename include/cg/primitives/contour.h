@@ -79,6 +79,11 @@ namespace cg
       {
          return pts_[idx];
       }
+      
+      point_2t<Scalar> & operator [] (size_t idx)
+      {
+         return pts_[idx];
+      }
 
    private:
       friend struct contour_builder_type;

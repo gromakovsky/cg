@@ -10,7 +10,7 @@
 #include "cg/visualization/viewer_adapter.h"
 #include "cg/visualization/draw_util.h"
 
-#include "cg/triangulation/delanay_triangulation.h"
+#include "cg/triangulation/delaunay_triangulation.h"
 
 #include "cg/io/point.h"
 
@@ -24,16 +24,9 @@ struct triangulation_viewer : cg::visualization::viewer_adapter
 {
    triangulation_viewer() : edit(true)
    {
-      /*on_press({50, 50});
-      on_press({-20, 50});
-      on_press({-20, -50});
-      on_key(Qt::Key_T);
-      on_press({50, -50});
-      on_key(Qt::Key_T);
-      on_press({0, 0});
-      on_key(Qt::Key_T);*/
    }
 
+   // functions to draw circles are from https://github.com/BorisMinaev/cg
    double area(triangle_2 const & tr) const
    {
       double res = 0;

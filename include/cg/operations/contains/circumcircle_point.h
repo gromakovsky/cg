@@ -1,3 +1,4 @@
+// From https://github.com/BorisMinaev/cg
 #pragma once
 
 #include "cg/primitives/point.h"
@@ -94,20 +95,24 @@ namespace cg
       }
    };
 
-   // true if circum_circle of triangle(a, b, c) contains d
-   inline bool circumcircle_contains(point_2 const & a, point_2 const & b, point_2 const & c, point_2 const & d)
+   // true if circumcircle of tr contains p
+   inline bool circumcircle_contains(const triangle_2 & tr, const point_2 & p)
    {
-      if (boost::optional<bool> v = in_circle_d()(a, b, c, d))
+      auto a = tr[0];
+      auto b = tr[1];
+      auto c = tr[2];
+
+      if (boost::optional<bool> v = in_circle_d()(a, b, c, p))
       {
          return *v;
       }
 
-      if (boost::optional<bool> v = in_circle_i()(a, b, c, d))
+      if (boost::optional<bool> v = in_circle_i()(a, b, c, p))
       {
          return *v;
       }
 
-      return *in_circle_r()(a, b, c, d);
+      return *in_circle_r()(a, b, c, p);
    }
 }
 
