@@ -72,13 +72,12 @@ namespace cg
       {
          std::array<node_iterator, 3> nodes;
          std::array<face_iterator, 3> neighbors;
-         bool alive;
 
-         my_face() : alive(true)
+         my_face()
          {
          }
 
-         my_face(const node_iterator & a, const node_iterator & b, const node_iterator & c) : my_face()
+         my_face(const node_iterator & a, const node_iterator & b, const node_iterator & c)
          {
             nodes[0] = a;
             nodes[1] = b;
@@ -213,7 +212,7 @@ namespace cg
          {
             for (auto it = faces.begin(); it != faces.end(); ++it)
             {
-               if (it->alive && it->contains(p))
+               if (it->contains(p))
                {
                   return it;
                }
@@ -365,11 +364,6 @@ namespace cg
             std::cerr << "Checking: ";
             face->print();
 
-            if (!face->alive)
-            {
-               return;
-            }
-
             for (size_t i = 0; i != 3; ++i)
             {
                auto cur_neighbor = (face->neighbors[i]);
@@ -411,12 +405,14 @@ namespace cg
 
          void insert_into_face(node_iterator p, face_iterator face_iter)
          {
-            auto face = *face_iter;
-            faces.push_back(my_face(face[0], face[1], p));
-            auto f1 = faces.end() - 1;
-            faces.push_back(my_face(face[1], face[2], p));
+            my_face face = *face_iter;
+            *face_iter = {face[0], face[1], p};
+            auto f1 = face_iter;
+            //faces.push_back({face[0], face[1], p});
+            //auto f1 = faces.end() - 1;
+            faces.push_back({face[1], face[2], p});
             auto f2 = faces.end() - 1;
-            faces.push_back(my_face(face[2], face[0], p));
+            faces.push_back({face[2], face[0], p});
             auto f3 = faces.end() - 1;
 
             f1->set_neighbors(f2, f3, face.neighbors[2]);
@@ -425,8 +421,6 @@ namespace cg
             notify_neighbors_and_nodes(f2);
             f3->set_neighbors(f1, f2, face.neighbors[1]);
             notify_neighbors_and_nodes(f3);
-
-            face_iter->alive = false;
 
             check(f1);
             check(f2);
@@ -479,14 +473,12 @@ namespace cg
          {
             std::vector< triangle_2t<Scalar> > result;
 
-            for (auto it : faces)
+            for (auto face : faces)
             {
-               if (it.inf() || !it.alive)
+               if (!face.inf())
                {
-                  continue;
+                  result.push_back(face.to_triangle());
                }
-
-               result.push_back(it.to_triangle());
             }
 
             return result;
@@ -606,13 +598,13 @@ namespace cg
 
          auto res = levels.front().localize_from(p, closest.front());
 
-         if (res->alive && !res->inf())
+         if (res->inf())
          {
-            return res->to_triangle();
+            return boost::none;
          }
          else
          {
-            return boost::none;
+            return res->to_triangle();
          }
 
       }
