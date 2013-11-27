@@ -9,6 +9,7 @@
 
 #include <iterator>
 #include <vector>
+#include <list>
 #include <random>
 #include <array>
 #include <utility>
@@ -28,11 +29,11 @@ namespace cg
 
       typedef point_2t<Scalar> point;
 
-      class my_node;
-      class my_face;
+      struct my_node;
+      struct my_face;
 
-      typedef typename std::vector<my_node>::iterator node_iterator;
-      typedef typename std::vector<my_face>::iterator face_iterator;
+      typedef typename std::list<my_node>::iterator node_iterator;
+      typedef typename std::list<my_face>::iterator face_iterator;
 
       static constexpr double P = 0.5;
 
@@ -161,15 +162,11 @@ namespace cg
 
       struct layer
       {
-         std::vector<my_node> nodes;
-         std::vector<my_face> faces;
-
-         size_t size_;
+         std::list<my_node> nodes;
+         std::list<my_face> faces;
 
          layer()
          {
-            nodes.reserve(100500); // :( TODO: refactor
-            faces.reserve(100500); // same
             my_node inf;
             inf.inf = true;
             nodes.push_back(inf);
@@ -292,11 +289,11 @@ namespace cg
          {
             faces.clear();
 
-            faces.push_back({nodes.begin(), nodes.begin() + 1, nodes.begin() + 2});
-            auto f1 = faces.end() - 1;
+            faces.push_back({nodes.begin(), std::next(nodes.begin()), std::next(std::next(nodes.begin()))});
+            auto f1 = std::prev(faces.end());
 
-            faces.push_back({nodes.begin(), nodes.begin() + 2, nodes.begin() + 1});
-            auto f2 = faces.end() - 1;
+            faces.push_back({nodes.begin(), std::next(std::next(nodes.begin())), std::next(nodes.begin())});
+            auto f2 = std::prev(faces.end());
 
             for (size_t i = 0; i != 3; ++i)
             {
@@ -400,9 +397,9 @@ namespace cg
             *face_iter = {face[0], face[1], p};
             auto f1 = face_iter;
             faces.push_back({face[1], face[2], p});
-            auto f2 = faces.end() - 1;
+            auto f2 = std::prev(faces.end());
             faces.push_back({face[2], face[0], p});
-            auto f3 = faces.end() - 1;
+            auto f3 = std::prev(faces.end());
 
             f1->set_neighbors(f2, f3, face.neighbors[2]);
             notify_neighbors_and_nodes(f1);
@@ -429,11 +426,11 @@ namespace cg
                if (size() > 2)
                {
                   auto face = localize(p, close_point);
-                  insert_into_face(nodes.end() - 1, face);
+                  insert_into_face(std::prev(nodes.end()), face);
                }
             }
 
-            return nodes.end() - 1;
+            return std::prev(nodes.end());
          }
 
          std::vector< triangle_2t<Scalar> > get_triangulation() const
@@ -469,8 +466,8 @@ namespace cg
       {
       }
 
-      template <class RandIter>
-      triangulatable_points_set_2t(RandIter p, RandIter q) : levels(1)
+      template <class InputIter>
+      triangulatable_points_set_2t(InputIter p, InputIter q) : levels(1)
       {
          for (auto it = p; it != q; ++it)
          {
@@ -546,7 +543,7 @@ namespace cg
          return levels.front().get_triangulation();
       }
 
-      boost::optional< triangle_2t<Scalar> > localize(const point_2t<Scalar> p)
+      boost::optional< triangle_2t<Scalar> > localize(const point & p)
       {
          std::vector<node_iterator> closest(levels.size());
          closest.back() = levels.back().find_closest(p, boost::none);
@@ -571,10 +568,10 @@ namespace cg
 
    };
 
-   template <class RandIter>
-   std::vector< triangle_2t<typename std::iterator_traits<RandIter>::value_type::scalar_type> > delaunay_triangulation(RandIter p, RandIter q)
+   template <class InputIter>
+   std::vector< triangle_2t<typename std::iterator_traits<InputIter>::value_type::scalar_type> > delaunay_triangulation(InputIter p, InputIter q)
    {
-      typedef typename std::iterator_traits<RandIter>::value_type::scalar_type Scalar;
+      typedef typename std::iterator_traits<InputIter>::value_type::scalar_type Scalar;
 
       triangulatable_points_set_2t<Scalar> points(p, q);
 
