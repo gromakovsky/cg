@@ -20,6 +20,7 @@ set(SOURCES
    convex.cpp
    intersection.cpp
    simplify.cpp
+   delaunay_triangulation.cpp
 )
 
 add_executable(cg-test ${SOURCES})
