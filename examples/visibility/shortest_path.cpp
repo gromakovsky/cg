@@ -104,11 +104,11 @@ struct shortest_path_viewer : cg::visualization::viewer_adapter
       if (points.size() == 2)
       {
          p.corner_stream() << "press N to start new polygon" << cg::visualization::endl
-                           << "press mouse rbutton to add vertex to current polygon" << cg::visualization::endl;
+                           << "press mouse rbutton to add vertex to current polygon" << cg::visualization::endl
+                           << "don't press on point inside existing polygon" << cg::visualization::endl;
       }
 
       p.corner_stream() << "double click clears the screen" << cg::visualization::endl;
-      p.corner_stream() << "size: " << path.size() << cg::visualization::endl;
 
       for (size_t i = 1; i != polygons.size(); ++i)
       {
@@ -124,6 +124,7 @@ struct shortest_path_viewer : cg::visualization::viewer_adapter
       polygons = std::vector< std::vector<point_2> >(1);
       edges.clear();
       points.clear();
+      path.clear();
       return true;
    }
 
