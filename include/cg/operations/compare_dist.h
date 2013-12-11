@@ -14,6 +14,7 @@ namespace cg
    {
       boost::optional<bool> operator() (point_2 const & a, point_2 const & b, point_2 const & c, point_2 const & d) const
       {
+         return boost::none;
          double dx1 = a.x - b.x;
          double dx2 = c.x - d.x;
          double dy1 = a.y - b.y;
