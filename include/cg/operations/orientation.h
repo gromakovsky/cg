@@ -48,6 +48,27 @@ namespace cg
 
          return boost::none;
       }
+
+      boost::optional<orientation_t> operator() (point_2t<Scalar> const & a, point_2t<Scalar> const & b, point_2t<Scalar> const & c, point_2t<Scalar> const & d) const
+      {
+         Scalar l = (b.x - a.x) * (d.y - c.y);
+         Scalar r = (b.y - a.y) * (d.x - c.x);
+         Scalar res = l - r;
+         Scalar eps = (fabs(l) + fabs(r)) * 8 * std::numeric_limits<Scalar>::epsilon();
+
+         if (res > eps)
+         {
+            return CG_LEFT;
+         }
+
+         if (res < -eps)
+         {
+            return CG_RIGHT;
+         }
+
+         return boost::none;
+      }
+
    };
 
    template <class Scalar>
@@ -78,6 +99,33 @@ namespace cg
 
          return boost::none;
       }
+
+      boost::optional<orientation_t> operator() (point_2t<Scalar> const & a, point_2t<Scalar> const & b, point_2t<Scalar> const & c, point_2t<Scalar> const & d) const
+      {
+         typedef typename boost::numeric::interval_lib::unprotect<typename boost::numeric::interval<Scalar> >::type interval;
+
+         typename boost::numeric::interval<Scalar>::traits_type::rounding _;
+         interval res =   (interval(b.x) - a.x) * (interval(d.y) - c.y)
+                          - (interval(b.y) - a.y) * (interval(d.x) - c.x);
+
+         if (res.lower() > 0)
+         {
+            return CG_LEFT;
+         }
+
+         if (res.upper() < 0)
+         {
+            return CG_RIGHT;
+         }
+
+         if (res.upper() == res.lower())
+         {
+            return CG_COLLINEAR;
+         }
+
+         return boost::none;
+      }
+
    };
 
    template <class Scalar>
@@ -102,6 +150,27 @@ namespace cg
 
          return CG_COLLINEAR;
       }
+
+      boost::optional<orientation_t> operator() (point_2t<Scalar> const & a, point_2t<Scalar> const & b, point_2t<Scalar> const & c, point_2t<Scalar> const & d) const
+      {
+         mpq_class res =   (mpq_class(b.x) - a.x) * (mpq_class(d.y) - c.y)
+                           - (mpq_class(b.y) - a.y) * (mpq_class(d.x) - c.x);
+
+         int cres = cmp(res, 0);
+
+         if (cres > 0)
+         {
+            return CG_LEFT;
+         }
+
+         if (cres < 0)
+         {
+            return CG_RIGHT;
+         }
+
+         return CG_COLLINEAR;
+      }
+
    };
 
    template <class Scalar>
@@ -120,6 +189,21 @@ namespace cg
       return *orientation_r<Scalar>()(a, b, c);
    }
 
+   template <class Scalar>
+   inline orientation_t orientation(point_2t<Scalar> const & a, point_2t<Scalar> const & b, point_2t<Scalar> const & c, point_2t<Scalar> const & d)
+   {
+      if (boost::optional<orientation_t> v = orientation_d<Scalar>()(a, b, c, d))
+      {
+         return *v;
+      }
+
+      if (boost::optional<orientation_t> v = orientation_i<Scalar>()(a, b, c, d))
+      {
+         return *v;
+      }
+
+      return *orientation_r<Scalar>()(a, b, c);
+   }
    template <class Scalar>
    inline bool counterclockwise(contour_2t<Scalar> const & c)
    {
