@@ -24,6 +24,24 @@ struct triangulation_viewer : cg::visualization::viewer_adapter
 {
    triangulation_viewer() : edit(true)
    {
+//      const double COUNT = 100;
+//      std::vector<cg::point_2> pts;
+
+//      for (double i = 0; i <= COUNT; i++)
+//      {
+//         pts.push_back({COUNT, i});
+//      }
+
+//      pts.push_back({-COUNT, -COUNT});
+
+//      points = pts;
+
+//      for (auto point : points)
+//      {
+//         set.insert(point);
+//      }
+
+//      triangulation = set.get_triangulation();
    }
 
    // functions to draw circles are from https://github.com/BorisMinaev/cg
@@ -152,7 +170,7 @@ struct triangulation_viewer : cg::visualization::viewer_adapter
 
       for (size_t i = 0; i < points.size(); ++i)
       {
-         p.global_stream((point_2f)points[i] + vector_2f(5, 0)) << i;
+         //p.global_stream((point_2f)points[i] + vector_2f(5, 0)) << i;
       }
    }
 

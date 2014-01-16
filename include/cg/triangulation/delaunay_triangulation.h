@@ -67,6 +67,18 @@ namespace cg
             return p == b.p;
          }
 
+         void print()
+         {
+            if (inf)
+            {
+               std::cerr << "inf";
+            }
+            else
+            {
+               std::cerr << "(" << p.x << ", " << p.y << ")";
+            }
+         }
+
       };
 
       struct my_face
@@ -94,7 +106,25 @@ namespace cg
 
          void print() const
          {
-            std::cerr << "{(" << nodes[0]->p.x << ", " << nodes[0]->p.y << "), (" << nodes[1]->p.x << ", " << nodes[1]->p.y << "), (" << nodes[2]->p.x << ", " << nodes[2]->p.y << ")}" << std::endl;
+            for (size_t i = 0; i != 3; ++i)
+            {
+               nodes[i]->print();
+               std::cerr << ", ";
+            }
+
+            std::cerr << std::endl;
+         }
+
+         void print_all() const
+         {
+            std::cerr << "Face: ";
+            print();
+            std::cerr << "Neighbors: ";
+
+            for (size_t i = 0; i != 3; ++i)
+            {
+               neighbors[i]->print();
+            }
          }
 
          bool is_vertex(const my_node & p) const
@@ -115,9 +145,22 @@ namespace cg
             }
          }
 
+         size_t inf_index() const
+         {
+            for (size_t i = 0; i != 3; ++i)
+            {
+               if (nodes[i]->inf)
+               {
+                  return i;
+               }
+            }
+
+            return 3;
+         }
+
          bool inf() const
          {
-            return nodes[0]->inf || nodes[1]->inf || nodes[2]->inf;
+            return inf_index() < 3;
          }
 
          triangle_2t<Scalar> to_triangle() const
@@ -139,24 +182,61 @@ namespace cg
                return inf();
             }
 
+            if (inf())
+            {
+               size_t i = inf_index();
+
+               if (orientation(nodes[(i + 1) % 3]->p, nodes[(i + 2) % 3]->p, node.p) == CG_COLLINEAR)
+               {
+                  if (collinear_are_ordered_along_line(nodes[(i + 1) % 3]->p, node.p, nodes[(i + 2) % 3]->p))
+                  {
+                     return true;
+                  }
+
+                  return neighbors[i]->inf() && on_ray(node);
+               }
+            }
+
             for (size_t i = 0; i != 3; ++i)
             {
 
                if (!nodes[i]->inf && !nodes[(i + 1) % 3]->inf && orientation(nodes[i]->p, nodes[(i + 1) % 3]->p, node.p) == CG_RIGHT)
                {
-                  //std::cerr << "Containts finished" << std::endl;
                   return false;
                }
             }
 
-            //std::cerr << "Containts finished" << std::endl;
-
             return true;
+         }
+
+         bool on_ray(const point & p) const
+         {
+            return on_ray(my_node(p));
+         }
+
+         bool on_ray(const my_node & node) const
+         {
+            if (inf())
+            {
+               size_t i = inf_index();
+
+               if (orientation(nodes[(i + 1) % 3]->p, nodes[(i + 2) % 3]->p, node.p) == CG_COLLINEAR && !collinear_are_ordered_along_line(nodes[(i + 1) % 3]->p, node.p, nodes[(i + 2) % 3]->p))
+               {
+                  return collinear_are_ordered_along_line(nodes[(i + 1) % 3]->p, nodes[(i + 2) % 3]->p, node.p);
+               }
+            }
+
+            return false;
          }
 
          node_iterator & operator [](const size_t i)
          {
             return nodes[i % 3];
+         }
+
+         bool is_line()
+         {
+            return !inf() && orientation(nodes[0]->p, nodes[1]->p, nodes[2]->p) == CG_COLLINEAR;
          }
       };
 
@@ -186,7 +266,17 @@ namespace cg
          {
             if (a.first.inf)
             {
-               return orientation(a.second.p, b.first.p, b.second.p) == CG_RIGHT;
+               return orientation(b.first.p, b.second.p, a.second.p) != CG_LEFT;
+            }
+
+            if (b.first.inf || b.second.inf)
+            {
+               return false;
+            }
+
+            if (orientation(b.first.p, b.second.p, a.second.p) == CG_COLLINEAR)
+            {
+               return false;
             }
 
             return orientation(b.first.p, b.second.p, a.second.p) != orientation(b.first.p, b.second.p, a.first.p);
@@ -211,20 +301,20 @@ namespace cg
             else
             {
                auto res = (*close_point)->face;
+               //res->print();
 
                while (!res->contains(p))
                {
-                  //res->print();
-
                   for (size_t i = 0; i != 3; ++i)
                   {
-
                      if (has_intersection(std::make_pair(*((*res)[i]), my_node(p)), std::make_pair(*((*res)[i + 1]), *((*res)[i + 2]))))
                      {
                         res = res->neighbors[i];
+                        //res->print();
                         break;
                      }
                   }
+
                }
 
                return res;
@@ -262,6 +352,28 @@ namespace cg
             else
             {
                my_face face = *localize(p, close_point);
+
+               if (face.on_ray(p))
+               {
+                  while (true)
+                  {
+                     size_t i = face.inf_index();
+                     auto right_neighbor = face.neighbors[(i + 1) % 3];
+                     size_t j = right_neighbor->inf_index();
+
+                     if (orientation(face.nodes[(i + 1) % 3]->p, face.nodes[(i + 2) % 3]->p, right_neighbor->nodes[(j + 2) % 3]->p) == CG_COLLINEAR && collinear_are_ordered_along_line(face.nodes[(i + 1) % 3]->p, face.nodes[(i + 2) % 3]->p, right_neighbor->nodes[(j + 2) % 3]->p))
+                     {
+                        face = *right_neighbor;
+                     }
+                     else
+                     {
+                        break;
+                     }
+                  }
+
+
+               }
+
                auto res = *close_point;
 
                for (size_t i = 0; i != 3; ++i)
@@ -285,10 +397,8 @@ namespace cg
 
          }
 
-         void three_points() // inf + 2 real points
+         void two_points()
          {
-            faces.clear();
-
             faces.push_back({nodes.begin(), std::next(nodes.begin()), std::next(std::next(nodes.begin()))});
             auto f1 = std::prev(faces.end());
 
@@ -370,6 +480,10 @@ namespace cg
                if (opposite == 3)
                {
                   std::cerr << "Opposite = 3" << std::endl;
+                  std::cerr << "face is: " << std::endl;
+                  face->print();
+                  std::cerr << "cur_neighbor is: " << std::endl;
+                  cur_neighbor->print_all();
                }
 
                auto opposite_point = (*cur_neighbor)[opposite];
@@ -391,26 +505,107 @@ namespace cg
             }
          }
 
+         void split_face(node_iterator p, face_iterator face_iter)
+         {
+            my_face face = *face_iter;
+            faces.erase(face_iter);
+            faces.push_back({face[1], face[2], p});
+            faces.push_back({face[2], face[0], p});
+            faces.push_back({face[0], face[1], p});
+         }
+
          void insert_into_face(node_iterator p, face_iterator face_iter)
          {
             my_face face = *face_iter;
-            *face_iter = {face[0], face[1], p};
-            auto f1 = face_iter;
-            faces.push_back({face[1], face[2], p});
-            auto f2 = std::prev(faces.end());
-            faces.push_back({face[2], face[0], p});
-            auto f3 = std::prev(faces.end());
 
-            f1->set_neighbors(f2, f3, face.neighbors[2]);
-            notify_neighbors_and_nodes(f1);
-            f2->set_neighbors(f3, f1, face.neighbors[0]);
-            notify_neighbors_and_nodes(f2);
-            f3->set_neighbors(f1, f2, face.neighbors[1]);
-            notify_neighbors_and_nodes(f3);
+            if (face.inf())
+            {
+               size_t i = face.inf_index();
 
-            check(f1);
-            check(f2);
-            check(f3);
+               if ((orientation(face[i + 1]->p, face[i + 2]->p, p->p) == CG_COLLINEAR) && !collinear_are_ordered_along_line(face[i + 1]->p, p->p, face[i + 2]->p))
+               {
+                  faces.push_back({face[i], face[i + 2], p});
+                  auto f1 = std::prev(faces.end());
+                  faces.push_back({face[i + 2], face[i], p});
+                  auto f2 = std::prev(faces.end());
+                  f1->set_neighbors(f2, f2, face_iter);
+                  notify_neighbors_and_nodes(f1);
+                  f2->set_neighbors(f1, f1, face.neighbors[i]);
+                  notify_neighbors_and_nodes(f2);
+
+                  check(f1);
+                  check(f2);
+                  return;
+               }
+            }
+
+            split_face(p, face_iter);
+            std::array<face_iterator, 3> iterators;
+            iterators[2] = std::prev(faces.end());
+            iterators[1] = std::prev(iterators[2]);
+            iterators[0] = std::prev(iterators[1]);
+
+            for (size_t i = 0; i != 3; ++i)
+            {
+               if (iterators[i]->is_line())
+               {
+                  faces.erase(iterators[i]);
+                  auto opposite = face.neighbors[i];
+                  my_face opposite_face = *opposite;
+                  split_face(p, opposite);
+
+                  std::array<face_iterator, 3> opposite_iterators;
+                  opposite_iterators[2] = std::prev(faces.end());
+                  opposite_iterators[1] = std::prev(opposite_iterators[2]);
+                  opposite_iterators[0] = std::prev(opposite_iterators[1]);
+
+                  size_t j = 0;
+
+                  for (j = 0; j != 3; ++j)
+                  {
+                     if (opposite_iterators[j]->is_line())
+                     {
+                        break;
+                     }
+                  }
+
+                  if (j == 3)
+                  {
+                     std::cerr << "opposite_iterators[j]->is_line not found" << std::endl;
+                  }
+
+                  faces.erase(opposite_iterators[j]);
+
+                  opposite_iterators[(j + 1) % 3]->set_neighbors(opposite_iterators[(j + 2) % 3], iterators[(i + 2) % 3], opposite_face.neighbors[(j + 1) % 3]);
+                  notify_neighbors_and_nodes(opposite_iterators[(j + 1) % 3]);
+                  opposite_iterators[(j + 2) % 3]->set_neighbors(iterators[(i + 1) % 3], opposite_iterators[(j + 1) % 3], opposite_face.neighbors[(j + 2) % 3]);
+                  notify_neighbors_and_nodes(opposite_iterators[(j + 2) % 3]);
+
+                  iterators[(i + 1) % 3]->set_neighbors(iterators[(i + 2) % 3], opposite_iterators[(j + 2) % 3], face.neighbors[(i + 1) % 3]);
+                  notify_neighbors_and_nodes(iterators[(i + 1) % 3]);
+                  iterators[(i + 2) % 3]->set_neighbors(opposite_iterators[(j + 1) % 3], iterators[(i + 1) % 3], face.neighbors[(i + 2) % 3]);
+                  notify_neighbors_and_nodes(iterators[(i + 2) % 3]);
+
+                  check(iterators[(i + 1) % 3]);
+                  check(iterators[(i + 2) % 3]);
+                  check(opposite_iterators[(j + 1) % 3]);
+                  check(opposite_iterators[(j + 2) % 3]);
+
+                  return;
+               }
+            }
+
+
+            for (size_t i = 0; i != 3; ++i)
+            {
+               iterators[i]->set_neighbors(iterators[(i + 1) % 3], iterators[(i + 2) % 3], face.neighbors[i]);
+               notify_neighbors_and_nodes(iterators[i]);
+            }
+
+            for (size_t i = 0; i != 3; ++i)
+            {
+               check(iterators[i]);
+            }
          }
 
          node_iterator insert(point p, boost::optional<node_iterator> close_point)
@@ -419,7 +614,7 @@ namespace cg
 
             if (size() == 2)
             {
-               three_points();
+               two_points();
             }
             else
             {
@@ -493,7 +688,7 @@ namespace cg
 
          closest.back() = levels.back().find_closest(p, boost::none);
 
-         if (closest.back()->p == p)
+         if (closest.back()->p == p && !closest.back()->inf)
          {
             return false;
          }
@@ -503,7 +698,7 @@ namespace cg
             //std::cerr << "Localising on level " << level << std::endl;
             closest[level] = levels[level].find_closest(p, closest[level + 1]->prev_level_node);
 
-            if (closest[level]->p == p)
+            if (closest[level]->p == p && !closest[level]->inf)
             {
                return false;
             }
@@ -534,7 +729,6 @@ namespace cg
             ++level;
          }
 
-         //std::cerr << "Inserted\nLevels = " << levels.size() << std::endl << std::endl;
          return true;
       }
 
