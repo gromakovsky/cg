@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once
 
 #include <boost/variant.hpp>
 #include <boost/none_t.hpp>
@@ -8,6 +8,8 @@
 #include <boost/numeric/interval.hpp>
 #include <cg/operations/has_intersection/segment_segment.h>
 #include <cmath>
+
+#include <iostream>
 
 namespace cg
 {
@@ -73,7 +75,7 @@ namespace cg
          double y_eps = y_sup * y_ind * 2 * std::numeric_limits<double>::epsilon();
 
          double bound = pow ( 2.0, eps_pwr );
-         
+
          std::cout << "int_d: (" << x << ", " << y << ")" << std::endl;
 
          if ( same_hotpixel ( x - x_eps, x + x_eps, bound ) && same_hotpixel ( y - y_eps, y + y_eps, bound ) )
@@ -97,7 +99,7 @@ namespace cg
 
          std::cout << "int_i: x=[" << res.x.lower() << ", " << res.x.upper() << "]\n";
          std::cout << "int_i: y=[" << res.y.lower() << ", " << res.y.upper() << "]" << std::endl;
-         
+
          if ( same_hotpixel ( res.x.lower(), res.x.upper(), bound )
                && same_hotpixel ( res.y.lower(), res.y.upper(), bound ) )
             return point_2 ( res.x.lower(), res.y.lower() );
@@ -144,19 +146,99 @@ namespace cg
       }
 
       std::cout.precision(20);
-      /*auto res_d = detail::intersection_d ( a, b, eps_pwr );
+      auto res_d = detail::intersection_d ( a, b, eps_pwr );
+      //commented
       if ( res_d.is_initialized() ) {
          return *res_d;
-      }*/
+      }
 
       auto res = detail::intersection_i ( a, b, eps_pwr );
       if (res) {
          return *res;
       }
-      
+
       return boost::none;
 
       return detail::intersection_r ( a, b );
 
+   }
+}
+*/
+#pragma once
+
+#include <boost/variant.hpp>
+#include <boost/none_t.hpp>
+
+#include <cg/primitives/point.h>
+#include <cg/primitives/segment.h>
+#include <cg/operations/has_intersection/segment_segment.h>
+
+namespace cg
+{
+   template<class Scalar>
+   inline boost::variant<boost::none_t, point_2t<Scalar>, segment_2t<Scalar>>
+         intersection(segment_2t<Scalar> const & a, segment_2t<Scalar> const & b)
+   {
+      if (a[0] == a[1])
+      {
+         if (has_intersection(a, b))
+         {
+            return a[0];
+         }
+         else
+         {
+            return boost::none;
+         }
+      }
+
+      if (b[0] == b[1])
+      {
+         if (has_intersection(a, b))
+         {
+            return b[0];
+         }
+         else
+         {
+            return boost::none;
+         }
+      }
+
+      orientation_t ab[2];
+
+      for (size_t l = 0; l != 2; ++l)
+      {
+         ab[l] = orientation(a[0], a[1], b[l]);
+      }
+
+      if (ab[0] == ab[1] && ab[0] == CG_COLLINEAR)
+      {
+         point_2t<Scalar> beg = std::max(min(a), min(b));
+         point_2t<Scalar> end = std::min(max(a), max(b));
+
+         if (beg == end)
+         {
+            return beg;
+         }
+         else if (beg < end)
+         {
+            return segment_2t<Scalar>(beg, end);
+         }
+         else
+         {
+            return boost::none;
+         }
+      }
+
+      if (ab[0] == ab[1] || orientation(b[0], b[1], a[0]) == orientation(b[0], b[1], a[1]))
+      {
+         return boost::none;
+      }
+
+      Scalar det = (a[0].x - a[1].x) * (b[0].y - b[1].y) - (a[0].y - a[1].y) * (b[0].x - b[1].x),
+             t1 = a[0].x * a[1].y - a[0].y * a[1].x,
+             t2 = b[0].x * b[1].y - b[0].y * b[1].x,
+             x = (t1 * (b[0].x - b[1].x) - t2 * (a[0].x - a[1].x)) / det,
+             y = (t1 * (b[0].y - b[1].y) - t2 * (a[0].y - a[1].y)) / det;
+      return cg::point_2t<Scalar>(x, y);
    }
 }

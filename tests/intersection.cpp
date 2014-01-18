@@ -8,6 +8,7 @@
 using namespace cg;
 const int EPS_PWR = -300;
 
+/*
 TEST ( intersection, simple )
 {
    auto test = cg::intersection ( {{0, 0}, {1, 1}}, {{1, 0}, {0, 1}}, -2 );
@@ -71,4 +72,4 @@ TEST ( intersection, random )
       }
    }
 }
-
+*/

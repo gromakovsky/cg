@@ -21,6 +21,7 @@ set(SOURCES
    intersection.cpp
    simplify.cpp
    delaunay_triangulation.cpp
+   triangle_rasterization.cpp
 )
 
 add_executable(cg-test ${SOURCES})
