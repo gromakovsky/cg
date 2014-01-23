@@ -26,38 +26,38 @@ namespace cg
 
       std::pair<Scalar, Scalar> get_bounds(Scalar y)
       {
+         std::vector< point_2t<Scalar> > intersections;
+
+         segment_2t<Scalar> bottom_line;
+         segment_2t<Scalar> top_line;
+         segment_2t<Scalar> s1;
+         segment_2t<Scalar> s2;
+
          if (y < points[1].y)
          {
-            std::vector< point_2t<Scalar> > intersections;
             Scalar bottom = std::max(y, points[0].y);
             Scalar top = std::min(y + 1, points[1].y);
-            segment_2t<Scalar> bottom_line = {{x0, bottom}, {x1, bottom}};
-            segment_2t<Scalar> top_line = {{x0, top}, {x1, top}};
-            segment_2t<Scalar> s1(points[0], points[1]);
-            segment_2t<Scalar> s2(points[0], points[2]);
-            intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s1, bottom_line)));
-            intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s2, bottom_line)));
-            intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s1, top_line)));
-            intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s2, top_line)));
-
-            return {floor(std::min_element(intersections.begin(), intersections.end())->x), ceil(std::max_element(intersections.begin(), intersections.end())->x)};
+            bottom_line = {{x0, bottom}, {x1, bottom}};
+            top_line = {{x0, top}, {x1, top}};
+            s1 = {points[0], points[1]};
+            s2 = {points[0], points[2]};
          }
          else
          {
-            std::vector< point_2t<Scalar> > intersections;
             Scalar bottom = std::max(y, points[1].y);
             Scalar top = std::min(y + 1, points[2].y);
-            segment_2t<Scalar> bottom_line = {{x0, bottom}, {x1, bottom}};
-            segment_2t<Scalar> top_line = {{x0, top}, {x1, top}};
-            segment_2t<Scalar> s1(points[2], points[0]);
-            segment_2t<Scalar> s2(points[2], points[1]);
-            intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s1, bottom_line)));
-            intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s2, bottom_line)));
-            intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s1, top_line)));
-            intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s2, top_line)));
-
-            return {floor(std::min_element(intersections.begin(), intersections.end())->x), ceil(std::max_element(intersections.begin(), intersections.end())->x)};
+            bottom_line = {{x0, bottom}, {x1, bottom}};
+            top_line = {{x0, top}, {x1, top}};
+            s1 = {points[2], points[0]};
+            s2 = {points[2], points[1]};
          }
+
+         intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s1, bottom_line)));
+         intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s2, bottom_line)));
+         intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s1, top_line)));
+         intersections.push_back(boost::get< point_2t<Scalar> >(intersection(s2, top_line)));
+
+         return {floor(std::min_element(intersections.begin(), intersections.end())->x), ceil(std::max_element(intersections.begin(), intersections.end())->x)};
       }
 
       void increment_y()
