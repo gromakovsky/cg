@@ -2,8 +2,6 @@
 
 #include "random_utils.h"
 
-#include <boost/assign/list_of.hpp>
-
 #include <cg/exam/triangle_rasterization.h>
 #include <cg/operations/has_intersection/rectangle_triangle.h>
 

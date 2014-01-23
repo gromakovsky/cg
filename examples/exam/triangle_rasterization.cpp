@@ -20,10 +20,6 @@ struct triangle_rasterization_viewer : cg::visualization::viewer_adapter
    triangle_rasterization_viewer()
       : n(0)
    {
-/*      n = 3;
-      points[0] = {100, 0};
-      points[1] = {1, 100};
-      points[2] = {20, 0};*/
    }
 
    void draw(cg::visualization::drawer_type & drawer) const
